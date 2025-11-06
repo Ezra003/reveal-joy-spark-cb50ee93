@@ -83,14 +83,14 @@ const Index = () => {
     }
   };
 
-  const saveEventData = async () => {
+  const saveEventData = async (screenToSave?: Screen) => {
     if (!eventId) return;
     
     try {
       await storage.set(`reveal:${eventId}`, JSON.stringify({
         gender: selectedGender,
         babyName,
-        screen,
+        screen: screenToSave || screen,
         enableVoting
       }), true);
     } catch (error) {
@@ -119,7 +119,7 @@ const Index = () => {
     
     const newScreen: Screen = enableVoting ? 'voting' : 'countdown';
     setScreen(newScreen);
-    await saveEventData();
+    await saveEventData(newScreen);
   };
 
   const handleVote = async (vote: 'boy' | 'girl') => {
@@ -157,7 +157,7 @@ const Index = () => {
 
   const startCountdown = async () => {
     setScreen('countdown');
-    await saveEventData();
+    await saveEventData('countdown');
     
     let currentCount = 3;
     
@@ -169,7 +169,7 @@ const Index = () => {
         clearInterval(timer);
         setTimeout(async () => {
           setScreen('reveal');
-          await saveEventData();
+          await saveEventData('reveal');
           setShowConfetti(true);
         }, 500);
       }
