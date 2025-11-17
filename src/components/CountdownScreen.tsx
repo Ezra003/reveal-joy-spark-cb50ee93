@@ -3,19 +3,13 @@ interface CountdownScreenProps {
   gender: 'boy' | 'girl';
 }
 
-export const CountdownScreen = ({ count, gender }: CountdownScreenProps) => {
-  const isBoy = gender === 'boy';
-  
+export const CountdownScreen = ({ count }: CountdownScreenProps) => {
   return (
     <div 
-      className={`min-h-screen flex items-center justify-center p-4 transition-all duration-500 ${
-        isBoy 
-          ? 'bg-gradient-to-br from-[hsl(var(--boy-secondary))] via-[hsl(var(--boy-light))] to-[hsl(var(--boy-light))]' 
-          : 'bg-gradient-to-br from-[hsl(var(--girl-secondary))] via-[hsl(var(--girl-light))] to-[hsl(var(--girl-light))]'
-      }`}
+      className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[hsl(var(--neutral-gradient-start))] via-[hsl(var(--neutral-gradient-mid))] to-[hsl(var(--neutral-gradient-end))]"
     >
       <div className="text-center">
-        <div className="text-9xl font-bold text-white animate-pulse drop-shadow-2xl">
+        <div className="text-9xl font-bold text-foreground animate-pulse drop-shadow-2xl">
           {count}
         </div>
       </div>
