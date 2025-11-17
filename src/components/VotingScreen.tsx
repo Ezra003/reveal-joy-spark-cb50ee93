@@ -29,7 +29,7 @@ export const VotingScreen = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[hsl(var(--neutral-gradient-start))] via-[hsl(var(--neutral-gradient-mid))] to-[hsl(var(--neutral-gradient-end))] flex items-center justify-center p-4">
-      <div className="bg-card rounded-3xl shadow-2xl p-8 max-w-md w-full animate-fade-in">
+      <div className="bg-card rounded-3xl shadow-2xl p-8 max-w-md w-full animate-fade-in backdrop-blur-sm border border-border/50">
         <div className="text-center mb-8">
           <Users className="w-16 h-16 mx-auto mb-4 text-accent" />
           <h1 className="text-3xl font-bold text-card-foreground mb-2">Guess the Gender!</h1>
@@ -37,9 +37,9 @@ export const VotingScreen = ({
         </div>
 
         {isHost && (
-          <div className="mb-6 p-4 bg-[hsl(var(--boy-light))]/30 rounded-xl">
-            <div className="flex items-center gap-2 mb-2">
-              <Share2 className="w-5 h-5 text-[hsl(var(--boy-primary))]" />
+          <div className="mb-6 p-5 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/20 animate-fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <Share2 className="w-5 h-5 text-primary animate-pulse" />
               <span className="font-semibold text-card-foreground">Share with Guests</span>
             </div>
             <div className="flex gap-2">
@@ -47,17 +47,20 @@ export const VotingScreen = ({
                 type="text"
                 value={shareUrl}
                 readOnly
-                className="flex-1 text-sm"
+                className="flex-1 text-sm bg-background/80"
               />
               <Button
                 onClick={onCopyLink}
                 variant="outline"
-                className="px-4"
+                className="px-4 hover:bg-primary hover:text-primary-foreground transition-all"
               >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Share this link for guests to vote on their devices!</p>
+            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+              <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              Share this link for guests to vote on their devices!
+            </p>
           </div>
         )}
 
@@ -65,26 +68,32 @@ export const VotingScreen = ({
           <button
             onClick={() => onVote('boy')}
             disabled={hasVoted}
-            className={`py-8 rounded-xl font-bold text-xl transition-all transform ${
+            className={`py-8 rounded-xl font-bold text-xl transition-all duration-300 transform relative overflow-hidden ${
               hasVoted
                 ? 'bg-muted cursor-not-allowed text-muted-foreground'
-                : 'bg-gradient-to-br from-[hsl(var(--boy-secondary))] to-[hsl(var(--boy-primary))] hover:from-[hsl(var(--boy-primary))] hover:to-[hsl(var(--boy-secondary))] hover:scale-105 shadow-lg text-white'
+                : 'bg-gradient-to-br from-[hsl(var(--boy-secondary))] to-[hsl(var(--boy-primary))] hover:from-[hsl(var(--boy-primary))] hover:to-[hsl(var(--boy-secondary))] hover:scale-110 hover:shadow-2xl hover:shadow-[hsl(var(--boy-primary))]/30 shadow-lg text-white active:scale-95'
             }`}
           >
-            <div className="text-5xl mb-2">💙</div>
-            <div>Team Boy</div>
+            <div className="text-5xl mb-2 transform transition-transform hover:scale-110">💙</div>
+            <div className="relative z-10">Team Boy</div>
+            {!hasVoted && (
+              <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity"></div>
+            )}
           </button>
           <button
             onClick={() => onVote('girl')}
             disabled={hasVoted}
-            className={`py-8 rounded-xl font-bold text-xl transition-all transform ${
+            className={`py-8 rounded-xl font-bold text-xl transition-all duration-300 transform relative overflow-hidden ${
               hasVoted
                 ? 'bg-muted cursor-not-allowed text-muted-foreground'
-                : 'bg-gradient-to-br from-[hsl(var(--girl-secondary))] to-[hsl(var(--girl-primary))] hover:from-[hsl(var(--girl-primary))] hover:to-[hsl(var(--girl-secondary))] hover:scale-105 shadow-lg text-white'
+                : 'bg-gradient-to-br from-[hsl(var(--girl-secondary))] to-[hsl(var(--girl-primary))] hover:from-[hsl(var(--girl-primary))] hover:to-[hsl(var(--girl-secondary))] hover:scale-110 hover:shadow-2xl hover:shadow-[hsl(var(--girl-primary))]/30 shadow-lg text-white active:scale-95'
             }`}
           >
-            <div className="text-5xl mb-2">💗</div>
-            <div>Team Girl</div>
+            <div className="text-5xl mb-2 transform transition-transform hover:scale-110">💗</div>
+            <div className="relative z-10">Team Girl</div>
+            {!hasVoted && (
+              <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity"></div>
+            )}
           </button>
         </div>
 

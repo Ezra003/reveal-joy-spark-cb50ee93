@@ -29,16 +29,16 @@ export const RevealScreen = ({
       }`}
     >
       <div className="text-center animate-fade-in">
-        <PartyPopper className="w-24 h-24 mx-auto mb-6 text-white animate-bounce" />
-        <h1 className="text-6xl md:text-8xl font-bold text-white mb-4 drop-shadow-2xl">
+        <PartyPopper className="w-24 h-24 mx-auto mb-6 text-white animate-bounce drop-shadow-2xl" />
+        <h1 className="text-6xl md:text-8xl font-bold text-white mb-4 drop-shadow-2xl animate-scale-in">
           It's a {isBoy ? 'Boy!' : 'Girl!'}
         </h1>
         {babyName && (
-          <p className="text-3xl md:text-5xl text-white font-semibold mb-8 drop-shadow-lg">
+          <p className="text-3xl md:text-5xl text-white font-semibold mb-8 drop-shadow-lg animate-fade-in" style={{ animationDelay: '0.3s' }}>
             Welcome {babyName}!
           </p>
         )}
-        <div className="text-8xl mb-8 animate-bounce">
+        <div className="text-8xl mb-8 animate-bounce drop-shadow-2xl" style={{ animationDelay: '0.5s' }}>
           {isBoy ? '💙' : '💗'}
         </div>
         
