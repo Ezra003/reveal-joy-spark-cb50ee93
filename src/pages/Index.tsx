@@ -25,17 +25,28 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Initialize or join event
+  // Initialize or join event - check hash first for shared data
   useEffect(() => {
     const initEvent = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const id = urlParams.get('event');
-      
-      if (id) {
-        // Guest joining existing event
-        setEventId(id);
-        setIsHost(false);
-        await loadEventData(id);
+      // Check if there's data in the hash (shared link)
+      if (window.location.hash) {
+        try {
+          const encoded = window.location.hash.substring(1);
+          const data = JSON.parse(atob(encoded));
+          
+          // Load shared event data
+          setSelectedGender(data.gender);
+          setBabyName(data.babyName || '');
+          setScreen(data.screen || 'voting');
+          setEnableVoting(data.enableVoting || false);
+          
+          // Generate a temporary event ID for this session
+          const tempId = generateEventId();
+          setEventId(tempId);
+          setIsHost(false);
+        } catch (error) {
+          console.error('Error loading shared data:', error);
+        }
       } else {
         // Host creating new event
         const newId = generateEventId();
@@ -181,7 +192,8 @@ const Index = () => {
   };
 
   const copyShareLink = () => {
-    const shareUrl = `${window.location.origin}${window.location.pathname}?event=${eventId}`;
+    // Generate share URL using current hash (which contains all event data)
+    const shareUrl = window.location.href;
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -216,7 +228,7 @@ const Index = () => {
     );
   }
 
-  const shareUrl = `${window.location.origin}${window.location.pathname}?event=${eventId}`;
+  const shareUrl = window.location.href;
 
   const confettiColors = selectedGender === 'boy' 
     ? ['#3b82f6', '#60a5fa', '#93c5fd'] 
