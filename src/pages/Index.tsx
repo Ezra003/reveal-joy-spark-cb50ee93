@@ -117,9 +117,13 @@ const Index = () => {
       return;
     }
     
-    const newScreen: Screen = enableVoting ? 'voting' : 'countdown';
-    setScreen(newScreen);
-    await saveEventData(newScreen);
+    if (enableVoting) {
+      setScreen('voting');
+      await saveEventData('voting');
+    } else {
+      // If voting is disabled, start countdown immediately
+      await startCountdown();
+    }
   };
 
   const handleVote = async (vote: 'boy' | 'girl') => {
