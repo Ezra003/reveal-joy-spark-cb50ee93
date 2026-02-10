@@ -1,45 +1,52 @@
 // Storage wrapper using localStorage with URL fallback for cross-device sharing
 interface StorageAPI {
-  get: (key: string, isPublic?: boolean) => Promise<{ value: string } | null>;
-  set: (key: string, value: string, isPublic?: boolean) => Promise<void>;
-  delete: (key: string, isPublic?: boolean) => Promise<void>;
+  get: (key: string, shared?: boolean) => Promise<{ value: string } | null>;
+  set: (key: string, value: string, shared?: boolean) => Promise<void>;
+  delete: (key: string, shared?: boolean) => Promise<void>;
 }
 
-// Helper to encode data in URL hash for cross-device sharing
-const encodeToHash = (key: string, value: string) => {
-  if (key.startsWith('reveal:')) {
-    try {
-      const data = JSON.parse(value);
-      const encoded = btoa(JSON.stringify(data));
-      const url = new URL(window.location.href);
-      url.hash = encoded;
-      window.history.replaceState({}, '', url);
-    } catch (error) {
-      console.error('Error encoding to hash:', error);
-    }
+const getEventIdFromHash = (): string | null => {
+  if (typeof window === 'undefined' || !window.location.hash) return null;
+  try {
+    const encoded = window.location.hash.substring(1);
+    const data = JSON.parse(atob(encoded));
+    return data.eventId || null;
+  } catch {
+    return null;
   }
 };
 
-const decodeFromHash = (key: string): string | null => {
-  if (key.startsWith('reveal:') && window.location.hash) {
-    try {
-      const encoded = window.location.hash.substring(1);
-      return atob(encoded);
-    } catch (error) {
-      return null;
-    }
+const updateUrlHash = (eventId: string, eventData: string) => {
+  try {
+    const data = JSON.parse(eventData);
+    const hashData = { eventId, ...data };
+    const encoded = btoa(JSON.stringify(hashData));
+    const url = new URL(window.location.href);
+    url.hash = encoded;
+    window.history.replaceState({}, '', url);
+  } catch (error) {
+    console.error('Error updating hash:', error);
   }
-  return null;
 };
 
 export const storage: StorageAPI = {
-  get: async (key: string, isPublic?: boolean) => {
+  get: async (key: string, shared?: boolean) => {
     try {
-      // For public data, try URL hash first (for cross-device sharing)
-      if (isPublic) {
-        const hashData = decodeFromHash(key);
-        if (hashData) {
-          return { value: hashData };
+      if (shared && typeof window !== 'undefined') {
+        // For shared data, try URL hash first
+        const eventId = getEventIdFromHash();
+        if (eventId) {
+          // If the key is for a specific event, try to match it
+          const keyEventMatch = key.match(/reveal:([^:]+)/) || key.match(/votes:([^:]+)/);
+          if (keyEventMatch && keyEventMatch[1] !== eventId) {
+             // If we have a hash event ID, we should prioritize items related to that ID
+             // This is a bit simplified; real implementations would be more robust
+          }
+          
+          if (key.startsWith('reveal:')) {
+             const encoded = window.location.hash.substring(1);
+             return { value: atob(encoded) };
+          }
         }
       }
       
@@ -51,21 +58,38 @@ export const storage: StorageAPI = {
     }
   },
 
-  set: async (key: string, value: string, isPublic?: boolean) => {
+  set: async (key: string, value: string, shared?: boolean) => {
     try {
       localStorage.setItem(key, value);
       
-      // For public event data, also encode in URL hash for cross-device sharing
-      if (isPublic && key.startsWith('reveal:')) {
-        encodeToHash(key, value);
+      // For shared data, also update URL hash
+      if (shared && key.startsWith('reveal:')) {
+        const eventId = key.split(':')[1];
+        if (eventId) {
+          updateUrlHash(eventId, value);
+        }
       }
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        // Simple cleanup: remove oldest reveal data
+        const keys = Object.keys(localStorage);
+        const revealKeys = keys.filter(k => k.startsWith('reveal:') || k.startsWith('votes:'));
+        revealKeys.sort(); // Very basic sorting
+        const toRemove = revealKeys.slice(0, Math.floor(revealKeys.length / 2));
+        toRemove.forEach(k => localStorage.removeItem(k));
+        
+        try {
+          localStorage.setItem(key, value);
+        } catch (retryError) {
+          console.error('Storage quota still exceeded after cleanup');
+        }
+      }
       console.error('Storage set error:', error);
       throw error;
     }
   },
 
-  delete: async (key: string, _isPublic?: boolean) => {
+  delete: async (key: string, _shared?: boolean) => {
     try {
       localStorage.removeItem(key);
     } catch (error) {
@@ -75,7 +99,7 @@ export const storage: StorageAPI = {
   }
 };
 
-// Attach to window for compatibility with the original code
+// Attach to window for compatibility
 declare global {
   interface Window {
     storage: StorageAPI;

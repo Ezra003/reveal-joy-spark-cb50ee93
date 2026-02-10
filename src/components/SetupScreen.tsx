@@ -2,6 +2,7 @@ import { Heart, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { sanitizeInput } from '@/lib/sanitize';
 
 interface SetupScreenProps {
   babyName: string;
@@ -64,8 +65,9 @@ export const SetupScreen = ({
               <Input
                 type="text"
                 value={babyName}
-                onChange={(e) => setBabyName(e.target.value)}
+                onChange={(e) => setBabyName(sanitizeInput(e.target.value))}
                 placeholder="Optional..."
+                maxLength={50}
                 className="bg-background/50 border-border/50 focus:border-primary/50 transition-all rounded-xl"
               />
             </div>
@@ -76,8 +78,9 @@ export const SetupScreen = ({
               <Input
                 type="text"
                 value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                onChange={(e) => setDueDate(sanitizeInput(e.target.value))}
                 placeholder="Expected..."
+                maxLength={100}
                 className="bg-background/50 border-border/50 focus:border-primary/50 transition-all rounded-xl"
               />
             </div>
@@ -90,13 +93,15 @@ export const SetupScreen = ({
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => setSelectedGender('boy')}
+                aria-pressed={selectedGender === 'boy'}
+                aria-label="Select boy gender for reveal"
                 className={`flex flex-col items-center py-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.03] shadow-lg relative overflow-hidden group ${
                   selectedGender === 'boy'
                     ? 'bg-gradient-to-br from-[hsl(var(--boy-primary))] to-[hsl(var(--boy-secondary))] text-white ring-2 ring-[hsl(var(--boy-light))] shadow-xl shadow-boy-primary/30'
                     : 'bg-background/40 hover:bg-background/60 text-foreground border border-border/50'
                 }`}
               >
-                <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">👶‍♂️</div>
+                <div className="text-4xl mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">👶‍♂️</div>
                 <div className="font-bold text-sm tracking-widest uppercase">Boy</div>
                 {selectedGender === 'boy' && (
                   <div className="absolute inset-0 animate-pulse bg-white/10"></div>
@@ -104,13 +109,15 @@ export const SetupScreen = ({
               </button>
               <button
                 onClick={() => setSelectedGender('girl')}
+                aria-pressed={selectedGender === 'girl'}
+                aria-label="Select girl gender for reveal"
                 className={`flex flex-col items-center py-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.03] shadow-lg relative overflow-hidden group ${
                   selectedGender === 'girl'
                     ? 'bg-gradient-to-br from-[hsl(var(--girl-primary))] to-[hsl(var(--girl-secondary))] text-white ring-2 ring-[hsl(var(--girl-light))] shadow-xl shadow-girl-primary/30'
                     : 'bg-background/40 hover:bg-background/60 text-foreground border border-border/50'
                 }`}
               >
-                <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">👶‍♀️</div>
+                <div className="text-4xl mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">👶‍♀️</div>
                 <div className="font-bold text-sm tracking-widest uppercase">Girl</div>
                 {selectedGender === 'girl' && (
                   <div className="absolute inset-0 animate-pulse bg-white/10"></div>

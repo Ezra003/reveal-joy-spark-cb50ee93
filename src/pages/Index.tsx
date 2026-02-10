@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
 import { SetupScreen } from '@/components/SetupScreen';
 import { VotingScreen } from '@/components/VotingScreen';
@@ -9,6 +9,8 @@ import { ConfettiCanvas } from '@/components/ConfettiCanvas';
 import { BackgroundParticles } from '@/components/BackgroundParticles';
 import { storage } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+import { babyNameSchema, dueDateSchema, guestNameSchema } from '@/lib/validation';
 
 type Screen = 'setup' | 'voting' | 'countdown' | 'reveal';
 
@@ -29,6 +31,8 @@ const Index = () => {
   const [guestName, setGuestName] = useState('');
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [pendingVote, setPendingVote] = useState<'boy' | 'girl' | null>(null);
+  const [isVoting, setIsVoting] = useState(false);
+  const [isStartingCountdown, setIsStartingCountdown] = useState(false);
   const { toast } = useToast();
 
   // Initialize or join event - check hash first for shared data
@@ -58,6 +62,8 @@ const Index = () => {
         const newId = generateEventId();
         setEventId(newId);
         setIsHost(true);
+        // Ensure the initial state is also in hash for potential immediate sharing
+        setTimeout(() => saveEventData(), 0);
       }
       setLoading(false);
       const savedGuestName = localStorage.getItem('guestName');
@@ -71,12 +77,39 @@ const Index = () => {
   useEffect(() => {
     if (!eventId || screen === 'setup') return;
     
-    const pollInterval = setInterval(async () => {
-      await loadEventData(eventId);
-    }, 2000);
+    let isActive = true;
+    let errorCount = 0;
+    const maxErrors = 5;
+
+    const poll = async () => {
+      if (!isActive) return;
+      
+      try {
+        await loadEventData(eventId);
+        errorCount = 0;
+      } catch (error) {
+        errorCount++;
+        if (errorCount >= maxErrors) {
+          isActive = false;
+          toast({
+            title: "Connection Issue",
+            description: "Trouble syncing data. Please refresh.",
+            variant: "destructive"
+          });
+        }
+      }
+
+      if (isActive) {
+        setTimeout(poll, 2000);
+      }
+    };
+
+    poll();
     
-    return () => clearInterval(pollInterval);
-  }, [eventId, screen]);
+    return () => {
+      isActive = false;
+    };
+  }, [eventId, screen, toast]);
 
   const generateEventId = () => {
     return 'event_' + Math.random().toString(36).substring(2, 9);
@@ -130,20 +163,33 @@ const Index = () => {
   };
 
   const handleSetup = async () => {
-    if (!selectedGender) {
-      toast({
-        title: "Please select a gender first!",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (enableVoting) {
-      setScreen('voting');
-      await saveEventData('voting');
-    } else {
-      // If voting is disabled, start countdown immediately
-      await startCountdown();
+    try {
+      if (babyName) babyNameSchema.parse(babyName);
+      if (dueDate) dueDateSchema.parse(dueDate);
+      
+      if (!selectedGender) {
+        toast({
+          title: "Please select a gender first!",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      if (enableVoting) {
+        setScreen('voting');
+        await saveEventData('voting');
+      } else {
+        // If voting is disabled, start countdown immediately
+        await startCountdown();
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Invalid input",
+          description: error.errors[0]?.message,
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -158,6 +204,9 @@ const Index = () => {
   };
 
   const submitVote = async (vote: 'boy' | 'girl', name: string) => {
+    if (isVoting) return;
+    setIsVoting(true);
+
     const voterId = localStorage.getItem('voterId') || generateEventId();
     localStorage.setItem('voterId', voterId);
     
@@ -171,58 +220,104 @@ const Index = () => {
           variant: "destructive"
         });
         setHasVoted(true);
+        setIsVoting(false);
         return;
       }
+
+      // Atomic update - get latest votes before incrementing
+      const votesResult = await storage.get(`votes:${eventId}`, true);
+      const latestVotes = votesResult 
+        ? JSON.parse(votesResult.value) 
+        : { boy: 0, girl: 0 };
+      
+      const newVotes = { ...latestVotes, [vote]: latestVotes[vote] + 1 };
+      
+      // Save mark as voted and new votes
+      await storage.set(voterKey, 'true', true);
+      await saveVotes(newVotes);
+
+      setVotes(newVotes);
+      setHasVoted(true);
+
+      toast({
+        title: `Thanks ${name}!`,
+        description: `Your vote for Team ${vote === 'boy' ? 'Boy' : 'Girl'} was recorded!`
+      });
     } catch (error) {
-      // Voter hasn't voted yet
+      toast({
+        title: "Vote failed",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsVoting(false);
     }
-
-    const newVotes = { ...votes, [vote]: votes[vote] + 1 };
-    setVotes(newVotes);
-    setHasVoted(true);
-    
-    await storage.set(voterKey, 'true', true);
-    await saveVotes(newVotes);
-
-    toast({
-      title: `Thanks ${name}!`,
-      description: `Your vote for Team ${vote === 'boy' ? 'Boy' : 'Girl'} was recorded!`
-    });
   };
 
   const handleNameSubmit = (name: string) => {
-    setGuestName(name);
-    localStorage.setItem('guestName', name);
-    setShowNameDialog(false);
-    if (pendingVote) {
-      submitVote(pendingVote, name);
-      setPendingVote(null);
+    try {
+      guestNameSchema.parse(name);
+      setGuestName(name);
+      localStorage.setItem('guestName', name);
+      setShowNameDialog(false);
+      if (pendingVote) {
+        submitVote(pendingVote, name);
+        setPendingVote(null);
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: "Invalid name",
+          description: error.errors[0]?.message,
+          variant: "destructive"
+        });
+      }
     }
   };
 
+  const timerRef = useRef<NodeJS.Timeout>();
+
   const startCountdown = async () => {
+    if (isStartingCountdown) return;
+    setIsStartingCountdown(true);
+
     setScreen('countdown');
     await saveEventData('countdown');
     
     let currentCount = 3;
     
-    const timer = setInterval(() => {
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    timerRef.current = setInterval(() => {
       currentCount--;
       setCount(currentCount);
       
-      if (currentCount === 0) {
-        clearInterval(timer);
+      if (currentCount <= 0) {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = undefined;
+        }
         setTimeout(async () => {
           setScreen('reveal');
           await saveEventData('reveal');
           setShowConfetti(true);
+          setIsStartingCountdown(false);
         }, 800);
       }
     }, 1000);
-    
-    // Cleanup timer on unmount
-    return () => clearInterval(timer);
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   const copyShareLink = async () => {
     // Ensure event data is saved to hash before copying

@@ -21,6 +21,12 @@ export const ConfettiCanvas = ({ colors, duration = 3000 }: ConfettiCanvasProps)
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationRef = useRef<number>();
+  const colorsRef = useRef(colors);
+  
+  // Update colors without recreating canvas
+  useEffect(() => {
+    colorsRef.current = colors;
+  }, [colors]);
 
   useEffect(() => {
     const canvas = document.createElement('canvas');
@@ -45,6 +51,7 @@ export const ConfettiCanvas = ({ colors, duration = 3000 }: ConfettiCanvasProps)
     handleResize();
 
     const addParticles = (angle: number, origin: { x: number; y: number }) => {
+      const currColors = colorsRef.current;
       const particleCount = 5;
       const spread = 55;
       
@@ -55,7 +62,7 @@ export const ConfettiCanvas = ({ colors, duration = 3000 }: ConfettiCanvasProps)
           y: origin.y * canvas.height,
           vx: Math.cos(angleRad) * (Math.random() * 10 + 10),
           vy: Math.sin(angleRad) * (Math.random() * 10 + 10) - 15,
-          color: colors[Math.floor(Math.random() * colors.length)],
+          color: currColors[Math.floor(Math.random() * currColors.length)],
           size: Math.random() * 10 + 5,
           rotation: Math.random() * 360,
           rotationSpeed: (Math.random() - 0.5) * 15,
@@ -90,7 +97,6 @@ export const ConfettiCanvas = ({ colors, duration = 3000 }: ConfettiCanvasProps)
         ctx.rotate(p.rotation * Math.PI / 180);
         ctx.fillStyle = p.color;
         
-        // Randomly draw squares or circles
         if (i % 2 === 0) {
           ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
         } else {
@@ -105,12 +111,14 @@ export const ConfettiCanvas = ({ colors, duration = 3000 }: ConfettiCanvasProps)
     };
 
     const startTime = Date.now();
+    let timeoutId: NodeJS.Timeout;
+
     const blastLoop = () => {
       const elapsed = Date.now() - startTime;
       if (elapsed < duration) {
         addParticles(60, { x: 0, y: 0.8 });
         addParticles(120, { x: 1, y: 0.8 });
-        setTimeout(blastLoop, 100);
+        timeoutId = setTimeout(blastLoop, 100);
       }
     };
 
@@ -120,9 +128,11 @@ export const ConfettiCanvas = ({ colors, duration = 3000 }: ConfettiCanvasProps)
     return () => {
       window.removeEventListener('resize', handleResize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (timeoutId) clearTimeout(timeoutId);
       if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+      particlesRef.current = [];
     };
-  }, [colors, duration]);
+  }, [duration]);
 
   return null;
 };

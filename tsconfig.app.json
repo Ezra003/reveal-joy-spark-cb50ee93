@@ -12,6 +12,7 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
@@ -28,14 +29,6 @@
         "./src/*"
       ]
     },
-    "typeRoots": [
-      "./node_modules/@types"
-    ],
-    "types": [
-      "node",
-      "react",
-      "react-dom"
-    ]
   },
   "include": [
     "src"
