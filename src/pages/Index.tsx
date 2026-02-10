@@ -4,15 +4,27 @@ import { SetupScreen } from '@/components/SetupScreen';
 import { VotingScreen } from '@/components/VotingScreen';
 import { CountdownScreen } from '@/components/CountdownScreen';
 import { RevealScreen } from '@/components/RevealScreen';
+import { PredictionGame } from '@/components/enhanced/PredictionGame';
+import { PhotoUpload } from '@/components/enhanced/PhotoUpload';
 import { GuestNameDialog } from '@/components/GuestNameDialog';
 import { ConfettiCanvas } from '@/components/ConfettiCanvas';
 import { BackgroundParticles } from '@/components/BackgroundParticles';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { storage } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
+import { useHaptic } from '@/hooks/useHaptic';
+import { useSound } from '@/hooks/useSound';
 import { z } from 'zod';
+import { sanitizeInput } from '@/lib/sanitize';
 import { babyNameSchema, dueDateSchema, guestNameSchema } from '@/lib/validation';
+import { cn } from '@/lib/utils';
 
-type Screen = 'setup' | 'voting' | 'countdown' | 'reveal';
+import { ThemeType } from '@/components/enhanced/ThemeSwitcher';
+import { HostAnalytics } from '@/components/enhanced/HostAnalytics';
+import { LandingScreen } from '@/components/enhanced/LandingScreen';
+
+type Screen = 'setup' | 'landing' | 'voting' | 'countdown' | 'reveal';
+type RevealMode = 'classic' | 'balloon' | 'box';
 
 const Index = () => {
   const [screen, setScreen] = useState<Screen>('setup');
@@ -30,10 +42,21 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [guestName, setGuestName] = useState('');
   const [showNameDialog, setShowNameDialog] = useState(false);
+  const [hasRSVPed, setHasRSVPed] = useState(false);
+  const [photos, setPhotos] = useState<{ url: string; id: string }[]>([]);
+  const [predictions, setPredictions] = useState<any[]>([]);
+  const [theme, setTheme] = useState<ThemeType>('default');
+  const [revealMode, setRevealMode] = useState<RevealMode>('classic');
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
   const [pendingVote, setPendingVote] = useState<'boy' | 'girl' | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const [isStartingCountdown, setIsStartingCountdown] = useState(false);
   const { toast } = useToast();
+  const haptic = useHaptic();
 
   // Initialize or join event - check hash first for shared data
   useEffect(() => {
@@ -175,12 +198,34 @@ const Index = () => {
         return;
       }
       
+      const hostId = Math.random().toString(36).substring(7);
+      sessionStorage.setItem('hostId', hostId);
+      
+      const eventData = JSON.stringify({
+        gender: selectedGender,
+        babyName,
+        dueDate,
+        enableVoting,
+        theme,
+        revealMode,
+        hostId,
+        createdAt: Date.now()
+      });
+      
+      await storage.set(`reveal:${eventId}`, eventData, true);
+      await storage.trackEngagement(eventId, hostId, 'setup_complete');
+      setIsHost(true);
+
       if (enableVoting) {
         setScreen('voting');
-        await saveEventData('voting');
       } else {
-        // If voting is disabled, start countdown immediately
-        await startCountdown();
+        // Check if pre-event or immediate countdown
+        const dateObj = new Date(dueDate);
+        if (dateObj > new Date()) {
+          setScreen('landing');
+        } else {
+          await startCountdown();
+        }
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -191,6 +236,18 @@ const Index = () => {
         });
       }
     }
+  };
+
+  const handleRSVP = async () => {
+    if (!eventId) return;
+    haptic.success();
+    await storage.trackEngagement(eventId, 'guest_id', 'rsvp_confirmed');
+    localStorage.setItem(`rsvp:${eventId}`, 'true');
+    setHasRSVPed(true);
+    toast({
+      title: "RSVP Confirmed! 🎉",
+      description: "We'll see you at the reveal!",
+    });
   };
 
   const handleVote = (vote: 'boy' | 'girl') => {
@@ -386,6 +443,10 @@ const Index = () => {
           setSelectedGender={setSelectedGender}
           enableVoting={enableVoting}
           setEnableVoting={setEnableVoting}
+          theme={theme}
+          setTheme={setTheme}
+          revealMode={revealMode}
+          setRevealMode={setRevealMode}
           onContinue={handleSetup}
         />
       )}
@@ -400,6 +461,19 @@ const Index = () => {
           copied={copied}
           onCopyLink={copyShareLink}
           onStartCountdown={startCountdown}
+          eventId={eventId}
+        />
+      )}
+
+      {screen === 'landing' && (
+        <LandingScreen
+          babyName={babyName}
+          dueDate={dueDate}
+          isHost={isHost}
+          onContinue={() => setScreen(enableVoting ? 'voting' : 'countdown')}
+          onRSVP={handleRSVP}
+          hasRSVPed={hasRSVPed}
+          eventId={eventId}
         />
       )}
 
@@ -416,7 +490,26 @@ const Index = () => {
           enableVoting={enableVoting}
           isHost={isHost}
           onReset={reset}
+          photos={photos}
+          onPhotoUpload={(url) => setPhotos(prev => [...prev, { url, id: Date.now().toString() }])}
+          revealMode={revealMode}
         />
+      )}
+
+      {/* Prediction Game Overlay for Guests */}
+      {screen === 'voting' && hasVoted && !isHost && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 z-40 animate-slide-in-bottom">
+          <PredictionGame 
+            guestName={guestName} 
+            onSubmit={(newPrediction) => setPredictions(prev => [...prev, newPrediction])} 
+          />
+        </div>
+      )}
+
+      {isHost && eventId && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)]">
+          <HostAnalytics eventId={eventId} />
+        </div>
       )}
     </>
   );

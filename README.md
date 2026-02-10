@@ -16,6 +16,16 @@ A magical, interactive, and modern web application for your Gender Reveal Party!
 - **Final Reveal:** Dramatic countdown followed by a burst of themed confetti.
 - **Offline First:** State management using `localStorage` ensures your data persists.
 
+## 📚 Documentation Package (v2.0)
+
+This project includes a comprehensive documentation package for the production-ready upgrade:
+
+- [**UI/UX Improvements & New Features**](docs/UI_UX_IMPROVEMENTS_AND_NEW_FEATURES.md)
+- [**Implementation Guide - Part 1: Core & Theme**](docs/IMPLEMENTATION_GUIDE_PART_1.md)
+- [**Implementation Guide - Part 2: Enhanced Screens**](docs/IMPLEMENTATION_GUIDE_PART_2.md)
+- [**Implementation Guide - Part 3: Final Features & Deployment**](docs/IMPLEMENTATION_GUIDE_PART_3.md)
+- [**Testing Checklist**](TESTING_CHECKLIST.md)
+
 ## 🚀 Getting Started
 
 ### Prerequisites

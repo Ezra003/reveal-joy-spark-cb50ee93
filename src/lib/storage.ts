@@ -3,6 +3,8 @@ interface StorageAPI {
   get: (key: string, shared?: boolean) => Promise<{ value: string } | null>;
   set: (key: string, value: string, shared?: boolean) => Promise<void>;
   delete: (key: string, shared?: boolean) => Promise<void>;
+  trackEngagement: (eventId: string, guestId: string, action: string) => Promise<void>;
+  getAnalytics: (eventId: string) => Promise<any>;
 }
 
 const getEventIdFromHash = (): string | null => {
@@ -95,6 +97,36 @@ export const storage: StorageAPI = {
     } catch (error) {
       console.error('Storage delete error:', error);
       throw error;
+    }
+  },
+
+  trackEngagement: async (eventId: string, guestId: string, action: string) => {
+    try {
+      const key = `analytics:${eventId}`;
+      const existing = localStorage.getItem(key);
+      const data = existing ? JSON.parse(existing) : { guests: {}, timeline: [] };
+      
+      if (!data.guests[guestId]) {
+        data.guests[guestId] = { firstSeen: Date.now(), actions: [] };
+      }
+      
+      data.guests[guestId].actions.push({ action, time: Date.now() });
+      data.timeline.push({ guestId, action, time: Date.now() });
+      
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.error('Error tracking engagement:', error);
+    }
+  },
+
+  getAnalytics: async (eventId: string) => {
+    try {
+      const key = `analytics:${eventId}`;
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : { guests: {}, timeline: [] };
+    } catch (error) {
+      console.error('Error getting analytics:', error);
+      return { guests: {}, timeline: [] };
     }
   }
 };
