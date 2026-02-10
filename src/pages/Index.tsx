@@ -4,7 +4,9 @@ import { SetupScreen } from '@/components/SetupScreen';
 import { VotingScreen } from '@/components/VotingScreen';
 import { CountdownScreen } from '@/components/CountdownScreen';
 import { RevealScreen } from '@/components/RevealScreen';
+import { GuestNameDialog } from '@/components/GuestNameDialog';
 import { ConfettiCanvas } from '@/components/ConfettiCanvas';
+import { BackgroundParticles } from '@/components/BackgroundParticles';
 import { storage } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,6 +16,7 @@ const Index = () => {
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedGender, setSelectedGender] = useState<'boy' | 'girl' | null>(null);
   const [babyName, setBabyName] = useState('');
+  const [dueDate, setDueDate] = useState('');
   const [count, setCount] = useState(3);
   const [votes, setVotes] = useState({ boy: 0, girl: 0 });
   const [hasVoted, setHasVoted] = useState(false);
@@ -23,6 +26,9 @@ const Index = () => {
   const [isHost, setIsHost] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [guestName, setGuestName] = useState('');
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [pendingVote, setPendingVote] = useState<'boy' | 'girl' | null>(null);
   const { toast } = useToast();
 
   // Initialize or join event - check hash first for shared data
@@ -54,6 +60,8 @@ const Index = () => {
         setIsHost(true);
       }
       setLoading(false);
+      const savedGuestName = localStorage.getItem('guestName');
+      if (savedGuestName) setGuestName(savedGuestName);
     };
     
     initEvent();
@@ -81,6 +89,7 @@ const Index = () => {
         const data = JSON.parse(eventResult.value);
         setSelectedGender(data.gender);
         setBabyName(data.babyName || '');
+        setDueDate(data.dueDate || '');
         setScreen(data.screen || 'voting');
         setEnableVoting(data.enableVoting || false);
       }
@@ -101,6 +110,7 @@ const Index = () => {
       await storage.set(`reveal:${eventId}`, JSON.stringify({
         gender: selectedGender,
         babyName,
+        dueDate,
         screen: screenToSave || screen,
         enableVoting
       }), true);
@@ -137,7 +147,17 @@ const Index = () => {
     }
   };
 
-  const handleVote = async (vote: 'boy' | 'girl') => {
+  const handleVote = (vote: 'boy' | 'girl') => {
+    if (!guestName) {
+      setPendingVote(vote);
+      setShowNameDialog(true);
+      return;
+    }
+    
+    submitVote(vote, guestName);
+  };
+
+  const submitVote = async (vote: 'boy' | 'girl', name: string) => {
     const voterId = localStorage.getItem('voterId') || generateEventId();
     localStorage.setItem('voterId', voterId);
     
@@ -165,9 +185,19 @@ const Index = () => {
     await saveVotes(newVotes);
 
     toast({
-      title: "Vote recorded!",
-      description: `You voted for Team ${vote === 'boy' ? 'Boy' : 'Girl'}!`
+      title: `Thanks ${name}!`,
+      description: `Your vote for Team ${vote === 'boy' ? 'Boy' : 'Girl'} was recorded!`
     });
+  };
+
+  const handleNameSubmit = (name: string) => {
+    setGuestName(name);
+    localStorage.setItem('guestName', name);
+    setShowNameDialog(false);
+    if (pendingVote) {
+      submitVote(pendingVote, name);
+      setPendingVote(null);
+    }
   };
 
   const startCountdown = async () => {
@@ -186,22 +216,33 @@ const Index = () => {
           setScreen('reveal');
           await saveEventData('reveal');
           setShowConfetti(true);
-        }, 500);
+        }, 800);
       }
     }, 1000);
+    
+    // Cleanup timer on unmount
+    return () => clearInterval(timer);
   };
 
-  const copyShareLink = () => {
-    // Generate share URL using current hash (which contains all event data)
-    const shareUrl = window.location.href;
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyShareLink = async () => {
+    // Ensure event data is saved to hash before copying
+    if (isHost && screen === 'setup') {
+      await saveEventData();
+    }
     
-    toast({
-      title: "Link copied!",
-      description: "Share this link with your guests"
-    });
+    const shareUrl = window.location.href;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      
+      toast({
+        title: "Link copied!",
+        description: "Guests can now join and vote!"
+      });
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
   };
 
   const reset = async () => {
@@ -236,12 +277,16 @@ const Index = () => {
 
   return (
     <>
+      <BackgroundParticles />
       {showConfetti && <ConfettiCanvas colors={confettiColors} />}
+      <GuestNameDialog isOpen={showNameDialog} onClose={handleNameSubmit} />
       
       {screen === 'setup' && isHost && (
         <SetupScreen
           babyName={babyName}
           setBabyName={setBabyName}
+          dueDate={dueDate}
+          setDueDate={setDueDate}
           selectedGender={selectedGender}
           setSelectedGender={setSelectedGender}
           enableVoting={enableVoting}
@@ -271,6 +316,7 @@ const Index = () => {
         <RevealScreen
           gender={selectedGender}
           babyName={babyName}
+          dueDate={dueDate}
           votes={votes}
           enableVoting={enableVoting}
           isHost={isHost}

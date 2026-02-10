@@ -1,48 +1,61 @@
-# Welcome to your Lovable project
+# ✨ Gender Reveal Party - Joy Spark
 
-## Project info
+A magical, interactive, and modern web application for your Gender Reveal Party! This app allows parents to set up an event, guests to vote on the gender, and finally reveals the big surprise with a countdown and confetti.
 
-**URL**: https://lovable.dev/projects/70f0e686-e8a0-4cb3-b849-4a50aedc18bb
+![Gender Reveal Demo](public/placeholder.svg)
 
-## How can I edit this code?
+## 🌟 Key Features
 
-There are several ways of editing your application.
+- **Modern & Premium UI:** Glassmorphism design with vibrant colors and smooth transitions.
+- **Interactive Voting:** Guests can join via a shared link and vote for "Team Boy" or "Team Girl".
+- **Dynamic Background:** Floating particle animation that adapts to the reveal result.
+- **Real-time Sharing:** Share your event link and watch votes come in live!
+- **Dark Mode:** Seamless support for light and dark themes using `next-themes`.
+- **Custom Event Data:** Support for baby names and due dates.
+- **Guest Personalization:** Collects guest names before they vote for a more personal touch.
+- **Final Reveal:** Dramatic countdown followed by a burst of themed confetti.
+- **Offline First:** State management using `localStorage` ensures your data persists.
 
-**Use Lovable**
+## 🚀 Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/70f0e686-e8a0-4cb3-b849-4a50aedc18bb) and start prompting.
+### Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+- [Node.js](https://nodejs.org/) (latest LTS)
+- [npm](https://www.npmjs.com/)
 
-**Use your preferred IDE**
+### Installation
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🛠️ Built With
 
-Follow these steps:
+- **Framework:** [React](https://reactjs.org/) with [TypeScript](https://www.typescriptlang.org/)
+- **Bundler:** [Vite](https://vitejs.dev/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components:** [shadcn/ui](https://ui.shadcn.com/) based on Radix UI
+- **Icons:** [Lucide React](https://lucide.dev/)
+- **Theme Management:** [next-themes](https://github.com/pacocoursey/next-themes)
+- **Animations:** Custom CSS and Tailwind animations
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 📁 Project Structure
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+src/
+├── components/       # Reusable UI components (shadcn and custom)
+├── hooks/            # Custom React hooks (toast, mobile-check, etc.)
+├── lib/              # Utility functions and storage logic
+├── pages/            # Main page components (Index, NotFound)
+└── App.tsx           # Root component with routing and providers
 ```
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
 
 - Navigate to the main page of your repository.
 - Click on the "Code" button (green button) near the top right.

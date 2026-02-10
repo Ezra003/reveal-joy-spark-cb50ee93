@@ -28,110 +28,117 @@ export const VotingScreen = ({
   const girlPercentage = totalVotes > 0 ? Math.round((votes.girl / totalVotes) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[hsl(var(--neutral-gradient-start))] via-[hsl(var(--neutral-gradient-mid))] to-[hsl(var(--neutral-gradient-end))] flex items-center justify-center p-4">
-      <div className="bg-card rounded-3xl shadow-2xl p-8 max-w-md w-full animate-fade-in backdrop-blur-sm border border-border/50">
-        <div className="text-center mb-8">
-          <Users className="w-16 h-16 mx-auto mb-4 text-accent" />
-          <h1 className="text-3xl font-bold text-card-foreground mb-2">Guess the Gender!</h1>
-          <p className="text-muted-foreground">What do you think it will be?</p>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-card/70 dark:bg-card/40 rounded-3xl shadow-2xl p-8 max-w-md w-full animate-fade-in backdrop-blur-md border border-border/50">
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users className="w-10 h-10 text-accent" />
+          </div>
+          <h1 className="text-4xl font-black text-card-foreground mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Guess the Gender!</h1>
+          <p className="text-muted-foreground font-medium tracking-tight">Voter turnout: {totalVotes}</p>
         </div>
 
         {isHost && (
-          <div className="mb-6 p-5 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-primary/20 animate-fade-in">
-            <div className="flex items-center gap-2 mb-3">
+          <div className="mb-8 p-6 bg-gradient-to-br from-primary/10 via-accent/5 to-boy-primary/10 rounded-2xl border border-primary/20 shadow-inner group transition-all hover:bg-primary/10">
+            <div className="flex items-center gap-3 mb-4">
               <Share2 className="w-5 h-5 text-primary animate-pulse" />
-              <span className="font-semibold text-card-foreground">Share with Guests</span>
+              <span className="font-bold text-card-foreground tracking-tight">Share with Guests</span>
             </div>
             <div className="flex gap-2">
               <Input
                 type="text"
                 value={shareUrl}
                 readOnly
-                className="flex-1 text-sm bg-background/80"
+                className="flex-1 text-sm bg-background/50 border-border/50 rounded-xl"
               />
               <Button
                 onClick={onCopyLink}
-                variant="outline"
-                className="px-4 hover:bg-primary hover:text-primary-foreground transition-all"
+                className="rounded-xl px-5 transition-all bg-primary hover:bg-primary/90"
               >
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-              <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              Share this link for guests to vote on their devices!
+            <p className="text-[10px] text-muted-foreground mt-3 flex items-center gap-2 uppercase font-black tracking-widest pl-1">
+              <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+              LIVE SHARING ACTIVE
             </p>
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-8">
           <button
             onClick={() => onVote('boy')}
             disabled={hasVoted}
-            className={`py-8 rounded-xl font-bold text-xl transition-all duration-300 transform relative overflow-hidden ${
+            className={`flex flex-col items-center py-10 rounded-2xl font-black text-xl transition-all duration-300 transform relative overflow-hidden shadow-lg group ${
               hasVoted
-                ? 'bg-muted cursor-not-allowed text-muted-foreground'
-                : 'bg-gradient-to-br from-[hsl(var(--boy-secondary))] to-[hsl(var(--boy-primary))] hover:from-[hsl(var(--boy-primary))] hover:to-[hsl(var(--boy-secondary))] hover:scale-110 hover:shadow-2xl hover:shadow-[hsl(var(--boy-primary))]/30 shadow-lg text-white active:scale-95'
+                ? 'bg-muted/50 cursor-not-allowed text-muted-foreground/50 border border-border/20 grayscale-[0.5]'
+                : 'bg-gradient-to-br from-[hsl(var(--boy-secondary))] to-[hsl(var(--boy-primary))] text-white hover:scale-105 active:scale-95 hover:shadow-2xl hover:shadow-boy-primary/30'
             }`}
           >
-            <div className="text-5xl mb-2 transform transition-transform hover:scale-110">💙</div>
-            <div className="relative z-10">Team Boy</div>
+            <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">💙</div>
+            <div className="relative z-10 uppercase tracking-widest text-sm">Team Boy</div>
             {!hasVoted && (
-              <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             )}
           </button>
+          
           <button
             onClick={() => onVote('girl')}
             disabled={hasVoted}
-            className={`py-8 rounded-xl font-bold text-xl transition-all duration-300 transform relative overflow-hidden ${
+            className={`flex flex-col items-center py-10 rounded-2xl font-black text-xl transition-all duration-300 transform relative overflow-hidden shadow-lg group ${
               hasVoted
-                ? 'bg-muted cursor-not-allowed text-muted-foreground'
-                : 'bg-gradient-to-br from-[hsl(var(--girl-secondary))] to-[hsl(var(--girl-primary))] hover:from-[hsl(var(--girl-primary))] hover:to-[hsl(var(--girl-secondary))] hover:scale-110 hover:shadow-2xl hover:shadow-[hsl(var(--girl-primary))]/30 shadow-lg text-white active:scale-95'
+                ? 'bg-muted/50 cursor-not-allowed text-muted-foreground/50 border border-border/20 grayscale-[0.5]'
+                : 'bg-gradient-to-br from-[hsl(var(--girl-secondary))] to-[hsl(var(--girl-primary))] text-white hover:scale-105 active:scale-95 hover:shadow-2xl hover:shadow-girl-primary/30'
             }`}
           >
-            <div className="text-5xl mb-2 transform transition-transform hover:scale-110">💗</div>
-            <div className="relative z-10">Team Girl</div>
+            <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">💗</div>
+            <div className="relative z-10 uppercase tracking-widest text-sm">Team Girl</div>
             {!hasVoted && (
-              <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             )}
           </button>
         </div>
 
         {totalVotes > 0 && (
-          <div className="mb-6 p-4 bg-muted rounded-xl">
-            <div className="flex justify-between mb-2 text-sm font-medium">
-              <span className="text-[hsl(var(--boy-primary))]">Boy: {boyPercentage}%</span>
-              <span className="text-[hsl(var(--girl-primary))]">Girl: {girlPercentage}%</span>
+          <div className="mb-8 p-6 bg-background/40 backdrop-blur-sm rounded-2xl border border-border/50 shadow-inner">
+            <div className="flex justify-between mb-3 text-xs font-black uppercase tracking-widest">
+              <span className="text-boy-primary flex items-center gap-1.5 font-black">
+               <span className="w-2 h-2 rounded-full bg-boy-primary"></span>
+               Boy: {boyPercentage}%
+              </span>
+              <span className="text-girl-primary flex items-center gap-1.5 font-black">
+                Girl: {girlPercentage}%
+                <span className="w-2 h-2 rounded-full bg-girl-primary"></span>
+              </span>
             </div>
-            <div className="flex h-4 bg-background rounded-full overflow-hidden">
+            <div className="flex h-5 bg-muted/50 rounded-full overflow-hidden p-1 border border-border/30 shadow-inner">
               <div
-                className="bg-[hsl(var(--boy-primary))] transition-all duration-500"
+                className="bg-boy-primary transition-all duration-1000 ease-out rounded-full shadow-lg"
                 style={{ width: `${boyPercentage}%` }}
               />
               <div
-                className="bg-[hsl(var(--girl-primary))] transition-all duration-500"
+                className="bg-girl-primary transition-all duration-1000 ease-out rounded-full shadow-lg"
                 style={{ width: `${girlPercentage}%` }}
               />
             </div>
-            <p className="text-center text-muted-foreground text-sm mt-2">
-              {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'} cast
-            </p>
           </div>
         )}
 
         {isHost && (
           <Button
             onClick={onStartCountdown}
-            className="w-full bg-gradient-to-r from-accent to-primary hover:opacity-90 text-white font-bold py-6 text-lg"
+            className="w-full bg-gradient-to-r from-accent to-primary hover:shadow-xl hover:shadow-primary/20 text-white font-black py-8 text-xl rounded-2xl transition-all transform hover:-translate-y-1"
             size="lg"
           >
-            Ready to Reveal! 🎉
+            READY TO REVEAL! 🎉
           </Button>
         )}
 
         {!isHost && (
-          <div className="text-center text-muted-foreground text-sm">
-            Waiting for host to start the reveal...
+          <div className="text-center group">
+            <p className="text-muted-foreground text-sm font-medium animate-pulse group-hover:text-primary transition-colors">
+              Waiting for the host to start the big reveal...
+            </p>
           </div>
         )}
       </div>
